@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Calcula el último día para entregar tu solicitud de vacaciones en el PAI.">
+<title>Plazo de Vacaciones PAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+
+/* Layout: una columna tipo "formulario oficial" para celular; resultado arriba, calendario de respaldo abajo */
+:root{
+  --bg:#f3f6f8; --surface:#ffffff; --ink:#15232e; --muted:#5b6b77; --line:#d9e1e7;
+  --brand:#0f4c6e; --brand-soft:#e3eef5;
+  --ok:#1f7a4d; --ok-soft:#e2f3ea; --warn:#a86400; --warn-soft:#fbefd9; --bad:#b3261e; --bad-soft:#fbe4e2;
+  --count:#cfe3f0; --of:#6b4fa3; --hol:#f6d9b8; --weekend:#eef1f4;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e161c; --surface:#16222b; --ink:#e6eef3; --muted:#9aabb7; --line:#2a3a46;
+  --brand:#7cc0e6; --brand-soft:#1b3342;
+  --ok:#6fd39f; --ok-soft:#173226; --warn:#f0b35a; --warn-soft:#3a2b12; --bad:#ff8a80; --bad-soft:#3d1a18;
+  --count:#1f4660; --of:#b9a2e8; --hol:#5a3d1c; --weekend:#1b2730; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e161c; --surface:#16222b; --ink:#e6eef3; --muted:#9aabb7; --line:#2a3a46;
+  --brand:#7cc0e6; --brand-soft:#1b3342;
+  --ok:#6fd39f; --ok-soft:#173226; --warn:#f0b35a; --warn-soft:#3a2b12; --bad:#ff8a80; --bad-soft:#3d1a18;
+  --count:#1f4660; --of:#b9a2e8; --hol:#5a3d1c; --weekend:#1b2730; color-scheme:dark}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 32px;display:grid;gap:18px}
+header{display:grid;gap:4px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:700}
+h1{font-family:var(--f-display);font-size:1.7rem;line-height:1.15;margin:0;text-wrap:balance}
+.lead{color:var(--muted);margin:0;font-size:.95rem}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 16px;display:grid;gap:14px}
+label{font-weight:600;font-size:.95rem}
+.field{display:grid;gap:6px}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;min-height:48px;text-align:left;font:inherit;font-size:1.05rem;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
+input[type=date]:focus-visible{outline:3px solid var(--brand);outline-offset:1px;border-color:var(--brand)}
+.hint{font-size:.82rem;color:var(--muted);margin:0}
+
+.result{border-radius:14px;padding:18px 16px;display:grid;gap:10px;border:1.5px solid}
+.result.ok{background:var(--ok-soft);border-color:var(--ok)}
+.result.warn{background:var(--warn-soft);border-color:var(--warn)}
+.result.bad{background:var(--bad-soft);border-color:var(--bad)}
+.pill{justify-self:start;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:99px;color:var(--surface)}
+.ok .pill{background:var(--ok)} .warn .pill{background:var(--warn)} .bad .pill{background:var(--bad)}
+.big-label{font-size:.85rem;color:var(--muted);margin:0}
+.big{font-family:var(--f-display);font-size:1.6rem;line-height:1.2;margin:0;text-wrap:balance}
+.msg{margin:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--surface);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-family:var(--f-display);font-size:1.4rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.8rem;color:var(--muted)}
+.note{font-size:.88rem;margin:0;padding:10px 12px;border-radius:10px;background:var(--surface)}
+.suggest{font-size:.95rem;margin:0}
+.suggest button{font:inherit;font-weight:600;color:var(--brand);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
+
+h2{font-family:var(--f-display);font-size:1.15rem;margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+.months{display:grid;gap:16px}
+.month h3{font-size:.95rem;margin:0 0 6px;text-transform:capitalize}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-variant-numeric:tabular-nums}
+.dow{font-size:.7rem;color:var(--muted);text-align:center;font-weight:600}
+.d{aspect-ratio:1;max-width:100%;display:grid;place-items:center;border-radius:7px;font-size:.85rem;position:relative}
+.d.we{background:var(--weekend);color:var(--muted)}
+.d.hol{background:var(--hol)}
+.d.cnt{background:var(--count);font-weight:600}
+.d.of{background:var(--of);color:var(--surface);font-weight:700}
+.d.dl{background:var(--brand);color:var(--surface);font-weight:700}
+.d.st{outline:2.5px solid var(--ok);outline-offset:-2.5px;font-weight:700}
+.d.today::after{content:"";position:absolute;bottom:4px;width:4px;height:4px;border-radius:50%;background:var(--ink)}
+
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:6px;counter-reset:s}
+.steps li{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--surface);border-radius:10px;padding:8px 12px;font-size:.9rem;counter-increment:s}
+.steps li span::before{content:counter(s) ". ";color:var(--muted);font-weight:600}
+.steps li b{font-variant-numeric:tabular-nums;font-weight:600}
+.holidays{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:.9rem}
+.holidays li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.holidays li span:first-child{font-variant-numeric:tabular-nums;color:var(--muted);flex:none}
+.holidays li.past{opacity:.5}
+footer{font-size:.8rem;color:var(--muted);display:grid;gap:6px}
+footer p{margin:0}
+@media (max-width:480px){h1{font-size:1.4rem}.wrap{gap:14px}.panel{padding:14px 14px}.result{padding:14px}.big{font-size:1.35rem}}
+@media (prefers-reduced-motion:no-preference){.result{transition:background-color .2s,border-color .2s}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">PAI · Recursos Humanos</span>
+    <h1>¿Hasta cuándo puedo pedir mis vacaciones?</h1>
+    <p class="lead">Elige cuándo inicias y te decimos el último día para entregar tu solicitud a RRHH.</p>
+  </header>
+
+  <section class="panel">
+    <div class="field">
+      <label for="inicio">Fecha de inicio de vacaciones</label>
+      <input type="date" id="inicio">
+      <p class="hint">Calendario disponible hasta el 31 de diciembre de 2027. Los feriados marcados "por confirmar" se ajustan cuando salga el decreto.</p>
+    </div>
+  </section>
+
+  <section id="res" class="result ok" aria-live="polite"></section>
+
+  <section class="panel">
+    <h2>Cómo se contó</h2>
+    <div class="legend">
+      <span><i style="background:var(--brand)"></i>Entrega a RRHH</span>
+      <span><i style="background:var(--of)"></i>Envío del oficio</span>
+      <span><i style="background:var(--count)"></i>Días hábiles contados</span>
+      <span><i style="outline:2px solid var(--ok);outline-offset:-2px"></i>Inicio de vacaciones</span>
+      <span><i style="background:var(--hol)"></i>Feriado</span>
+      <span><i style="background:var(--weekend)"></i>Fin de semana</span>
+    </div>
+    <div id="cal" class="months"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Feriados que se descuentan</h2>
+    <ul id="hols" class="holidays"></ul>
+  </section>
+
+  <footer>
+    <p>Base: Circular No. 20-CYR-2026, Departamento de Control y Registro, Secretaría de Salud (16 de septiembre de 2026). Procedimiento del PAI: entregas tu solicitud a Recursos Humanos, al día hábil siguiente se envía el oficio, luego corren 15 días hábiles completos y al terminar inicias vacaciones.</p>
+    <p>Toda solicitud requiere visto bueno de la Gerencia Administrativa. Si es una emergencia y no cumples el plazo, tu jefe inmediato debe justificarlo en el oficio.</p>
+    <p>Esta calculadora es de referencia. Ante dudas, confirma con Recursos Humanos del PAI.</p>
+  </footer>
+</div>
+
+<script>
+const HOLIDAYS = [
+  ["2026-09-15","Día de la Independencia"],
+  ["2026-10-05","Semana Morazánica"],["2026-10-06","Semana Morazánica"],["2026-10-07","Semana Morazánica"],
+  ["2026-10-08","Semana Morazánica"],["2026-10-09","Semana Morazánica"],
+  ["2026-12-24","Nochebuena"],["2026-12-25","Navidad"],
+  ["2026-12-31","Fin de año"],["2027-01-01","Año Nuevo"],
+  ["2027-03-25","Jueves Santo"],["2027-03-26","Viernes Santo"],
+  ["2027-04-14","Día de las Américas"],
+  ["2027-05-01","Día del Trabajo"],
+  ["2027-09-15","Día de la Independencia"],
+  ["2027-10-06","Semana Morazánica (por confirmar)"],["2027-10-07","Semana Morazánica (por confirmar)"],
+  ["2027-10-08","Semana Morazánica (por confirmar)"],
+  ["2027-12-24","Nochebuena"],["2027-12-25","Navidad"],["2027-12-31","Fin de año"]
+];
+const REQUIRED = 15, WARN_AT = 3;
+const MIN = new Date(2026,8,1), MAX = new Date(2027,11,31);
+const holMap = new Map(HOLIDAYS);
+
+const pad = n => String(n).padStart(2,"0");
+const key = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const isWeekend = d => d.getDay()===0 || d.getDay()===6;
+const isBiz = d => !isWeekend(d) && !holMap.has(key(d));
+const fmtLong = d => d.toLocaleDateString("es-HN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+const fmtShort = d => d.toLocaleDateString("es-HN",{weekday:"short",day:"numeric",month:"short"});
+const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+
+const now = new Date();
+const TODAY = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+/* Cronología (hacia atrás desde el inicio):
+   inicio ← 15 días hábiles corridos ← 1 día hábil: RRHH envía el oficio ← 1 día hábil: el empleado entrega la solicitud */
+function prevBiz(d){ d = addDays(d,-1); while(!isBiz(d)) d = addDays(d,-1); return d; }
+function plan(start){
+  const counted = []; let d = addDays(start,-1);
+  while(counted.length < REQUIRED){ if(isBiz(d)) counted.push(d); d = addDays(d,-1); }
+  const firstCounted = counted[REQUIRED-1];
+  const oficio = prevBiz(firstCounted);
+  const entrega = prevBiz(oficio);
+  return { counted, firstCounted, oficio, entrega };
+}
+function bizInclusive(a,b){ let n=0; for(let d=a; d<=b; d=addDays(d,1)) if(isBiz(d)) n++; return n; }
+function earliestValid(){
+  for(let d=TODAY; d<=MAX; d=addDays(d,1)){
+    if(!isBiz(d)) continue;
+    if(plan(d).entrega >= TODAY) return d;
+  }
+  return null;
+}
+
+const $in = document.getElementById("inicio");
+$in.min = key(TODAY > MIN ? TODAY : MIN);
+$in.max = key(MAX);
+
+function render(){
+  const res = document.getElementById("res");
+  if(!$in.value){ res.className="result warn"; res.innerHTML='<p class="msg">Elige una fecha de inicio.</p>'; renderCal(null); return; }
+  const start = parse($in.value);
+  if(start > MAX || start < MIN){ res.className="result warn"; res.innerHTML='<p class="msg">Elige una fecha entre septiembre de 2026 y el 31 de diciembre de 2027.</p>'; renderCal(null); return; }
+
+  const P = plan(start);
+  const deadline = P.entrega;
+  let cls, pill, msg, remaining = 0;
+
+  if(TODAY > deadline){
+    cls="bad"; pill="Fuera de plazo";
+    msg="La fecha para entregar la solicitud ya pasó. Toca reprogramar tus vacaciones con tu jefe inmediato.";
+  } else {
+    remaining = bizInclusive(TODAY, deadline);
+    if(key(TODAY)===key(deadline)){ cls="warn"; pill="Último día"; msg="Hoy es el último día para entregar tu solicitud a Recursos Humanos."; }
+    else if(remaining <= WARN_AT){ cls="warn"; pill="Entrega pronto"; msg=`Te quedan ${remaining} días hábiles para entregar, contando hoy si es día laboral.`; }
+    else { cls="ok"; pill="A tiempo"; msg=`Estás a tiempo. Te quedan ${remaining} días hábiles para entregar tu solicitud.`; }
+  }
+
+  let extra = "";
+  if(!isBiz(start)){
+    const why = holMap.get(key(start));
+    extra += `<p class="note">Tu fecha de inicio cae en ${why ? "feriado ("+why+")" : "fin de semana"}. Lo usual es iniciar en un día hábil.</p>`;
+  }
+  if(cls==="bad"){
+    const ev = earliestValid();
+    extra += ev
+      ? `<p class="suggest">La fecha de inicio más próxima que sí cumple es <button type="button" id="useEv" data-d="${key(ev)}">${fmtLong(ev)}</button>.</p>`
+      : `<p class="suggest">No hay fechas válidas dentro del calendario disponible (hasta diciembre 2027).</p>`;
+  } else {
+    extra += `<p class="note">Consejo: entrega unos días antes del límite. La solicitud todavía necesita el visto bueno de la Gerencia Administrativa.</p>`;
+  }
+
+  res.className = "result "+cls;
+  res.innerHTML = `
+    <span class="pill">${pill}</span>
+    <p class="big-label">Último día para entregar tu solicitud a Recursos Humanos del PAI</p>
+    <p class="big">${cap(fmtLong(deadline))}</p>
+    <p class="msg">${msg}</p>
+    <div class="stats">
+      <div class="stat"><b>${cls==="bad" ? "0" : remaining}</b><span>días hábiles te quedan</span></div>
+      <div class="stat"><b>${REQUIRED}</b><span>días hábiles antes del inicio</span></div>
+    </div>
+    <ol class="steps">
+      <li><span>Entregas la solicitud a RRHH</span><b>${cap(fmtShort(P.entrega))}</b></li>
+      <li><span>RRHH envía el oficio</span><b>${cap(fmtShort(P.oficio))}</b></li>
+      <li><span>Corren los 15 días hábiles</span><b>${cap(fmtShort(P.firstCounted))} – ${fmtShort(P.counted[0])}</b></li>
+      <li><span>Inicias vacaciones</span><b>${cap(fmtShort(start))}</b></li>
+    </ol>
+    ${extra}`;
+  const b = document.getElementById("useEv");
+  if(b) b.addEventListener("click", () => { $in.value = b.dataset.d; render(); });
+  renderCal(start, P);
+}
+
+function renderCal(start, P){
+  const cal = document.getElementById("cal");
+  if(!start){ cal.innerHTML='<p class="hint">El calendario aparece al elegir una fecha.</p>'; return; }
+  const cset = new Set(P.counted.map(key));
+  const enKey = key(P.entrega), ofKey = key(P.oficio), stKey = key(start);
+  let m = new Date(P.entrega.getFullYear(), P.entrega.getMonth(), 1);
+  const last = new Date(start.getFullYear(), start.getMonth(), 1);
+  let html = "";
+  while(m <= last){
+    const name = m.toLocaleDateString("es-HN",{month:"long",year:"numeric"});
+    html += `<div class="month"><h3>${name}</h3><div class="grid">`;
+    ["L","M","M","J","V","S","D"].forEach(x => html += `<div class="dow">${x}</div>`);
+    const offset = (m.getDay()+6)%7;
+    for(let i=0;i<offset;i++) html += "<div></div>";
+    const dim = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
+    for(let i=1;i<=dim;i++){
+      const d = new Date(m.getFullYear(), m.getMonth(), i), k = key(d);
+      const c = ["d"];
+      if(isWeekend(d)) c.push("we");
+      if(holMap.has(k)) c.push("hol");
+      if(cset.has(k)) c.push("cnt");
+      if(k===ofKey) c.push("of");
+      if(k===enKey) c.push("dl");
+      if(k===stKey) c.push("st");
+      if(k===key(TODAY)) c.push("today");
+      const t = holMap.get(k) || (k===enKey ? "Entrega a RRHH" : k===ofKey ? "Envío del oficio" : k===stKey ? "Inicio" : "");
+      html += `<div class="${c.join(" ")}"${t?` title="${t}"`:""}>${i}</div>`;
+    }
+    html += "</div></div>";
+    m = new Date(m.getFullYear(), m.getMonth()+1, 1);
+  }
+  cal.innerHTML = html;
+}
+
+document.getElementById("hols").innerHTML = HOLIDAYS.map(([k,n]) => {
+  const d = parse(k);
+  return `<li class="${d < TODAY ? "past":""}"><span>${cap(fmtShort(d))}</span><span>${n}</span></li>`;
+}).join("");
+
+/* Ejemplo inicial: 2 de noviembre de 2026, o la primera fecha válida si ya pasó */
+const sample = parse("2026-11-02");
+const ev0 = earliestValid();
+$in.value = key(plan(sample).entrega >= TODAY ? sample : (ev0 || MAX));
+$in.addEventListener("change", render);
+$in.addEventListener("input", render);
+render();
+</script>
+
+</body>
+</html>
